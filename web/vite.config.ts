@@ -31,7 +31,7 @@ export default ({ mode, command }) => {
           target: 'http://192.168.31.106:8089',
           secure: false, //请求是否为https
           changeOrigin: true, //是否为跨域
-          rewrite: (path) => path.replace(/^\/api/, '')
+          rewrite: (path) => path.replace(/^\/api/, 'v1')
         }
       }
     },

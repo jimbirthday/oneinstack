@@ -5,7 +5,7 @@ import System from '@/utils/System'
 import { Api } from '@/api/Api'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import sconfig from '@/sstore/sconfig'
-
+import i18n from '@/lang/index.ts'
 
 const isMobile = ref(window.innerWidth <= 768 ? false : true)
 
@@ -33,12 +33,12 @@ const conf = reactive({
         ...conf.form,
         final: () => conf.loading = false
       })
+      console.log(res)
       ElMessage.success('登录成功')
       
       sconfig.login(res)
       setTimeout(() => {
         System.router.push('/')
-         
       }, 500)
       // getSystemInfo()
     })
@@ -69,7 +69,9 @@ const conf = reactive({
       </div>
       <div class="" :class="{'login-title-box': isMobile}">
         <div class="login-title flex" :class="{'mobile-title': isMobile}">
+			 <!-- {{i18n.t('welcome')}} -->
           <transition name="fade" mode="out-in">
+			 
             <div style="flex: 1;" :key="!isMobile ? 1 : 0">{{ isMobile ? '欢迎使用': '欢迎来到Oneinstack' }}</div>
           </transition>
         </div>

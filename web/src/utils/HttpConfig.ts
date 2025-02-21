@@ -23,6 +23,7 @@ export default class HttpConfig {
     const error = (_code: number, config: any, xhr: any) => {
       let code = xhr?.data?.code || _code,
         msg = xhr?.data?.message || ''
+        
       funrun(config.data, ['final', 'fail', 'complete'], _code == 200, config, xhr)
       switch (code) {
         case HttpCode.LOGIN_EXPIRED:

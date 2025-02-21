@@ -61,15 +61,15 @@ const conf = reactive({
         dark: ['#eab170', '#ffffff']
       }
     },
-    {
-      name: '监控',
-      path: '/monitor',
-      icon: 'monitor',
-      activeColor: {
-        light: ['#eab170', '#8B8B8B'],
-        dark: ['#eab170', '#ffffff']
-      }
-    },
+    // {
+    //   name: '监控',
+    //   path: '/monitor',
+    //   icon: 'monitor',
+    //   activeColor: {
+    //     light: ['#eab170', '#8B8B8B'],
+    //     dark: ['#eab170', '#ffffff']
+    //   }
+    // },
     {
       name: '安全',
       path: '/security',
@@ -180,7 +180,8 @@ const BindButton = ()=>{
         <search-input v-model="conf.searchValue" placeholder="请输入关键词进行搜索" />
         <img class="avatar-img" src="/static/images/avatar.png" alt="" />
         <el-dropdown placement="bottom">
-          <img class="arrow-down" src="/static/images/arrow-down.png" alt="" />
+			<img class="arrow-down" src="/static/images/arrow-down.png" alt="" />
+		
       <template #dropdown>
         <el-dropdown-menu>
           <el-dropdown-item @click="Beturn">退出</el-dropdown-item>

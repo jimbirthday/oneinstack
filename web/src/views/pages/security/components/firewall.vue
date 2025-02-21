@@ -58,12 +58,19 @@ const handleOpenPing =async (value: string) => {
   console.log(value,'value')
   if(value === 'ping'){
     const { data: res_wall} = await Api.openPing('')
-    let ping_val = !ping_value.value
-    ping_value.value = !ping_val
+    console.log(res_wall,'res_wall')
+    if (res_wall){
+      let ping_val = !ping_value.value
+      ping_value.value = !ping_val
+    }
+   
   }else{
     const { data: res_ping } = await Api.stopFirewall('')
-    let wall_val = !wall_value.value
-    wall_value.value = !wall_val
+    if(res_ping) {
+      let wall_val = !wall_value.value
+      wall_value.value = !wall_val
+    }
+   
   }
 }
 let searchValue = ref('')

@@ -28,7 +28,7 @@ const conf = reactive({
 
 <template>
   <div class="task-container">
-    <card-tabs :list="conf.list" :activeIndex="conf.activeIndex" :clickActive="conf.clickActive" />
+    <!-- <card-tabs :list="conf.list" :activeIndex="conf.activeIndex" :clickActive="conf.clickActive" /> -->
     <component :is="conf.list[conf.activeIndex].component" />
   </div>
 </template>

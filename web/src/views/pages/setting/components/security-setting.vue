@@ -118,7 +118,7 @@ const conf = reactive<Config>({
           ruleForm.value.port = String(conf.settingData[0].value)
         }
       },
-      tip: '建议端口范围8888 - 65535，<span style="color: var(--el-color-primary)">注意：有安全组的服务器请提前在安全组放行新端口</span>'
+      tip: '例如:8080<span style="color: var(--el-color-primary)">注意：有安全组的服务器请提前在安全组放行新端口</span>'
     },
     // {
     //   label: '安全入口',

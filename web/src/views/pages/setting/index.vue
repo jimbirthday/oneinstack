@@ -45,12 +45,12 @@ const conf = reactive({
 <template>
   <div class="setting-container relative">
     <div class="absolute fit-width" style="padding-bottom: 35px">
-      <card-tabs
+      <!-- <card-tabs
         :list="conf.menuList"
         :activeIndex="conf.activeIndex"
         :clickActive="conf.clickActive"
         style="margin-bottom: 20px"
-      />
+      /> -->
       <component :is="conf.menuList[conf.activeIndex].component" />
     </div>
   </div>

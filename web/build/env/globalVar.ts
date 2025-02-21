@@ -25,6 +25,7 @@ const getConf = () => {
 
 export const globalVar = (mode: string) => {
   mode = mode == 'production' ? 'pro' : mode
+  console.log('mode', mode)
   let _conf = getConf()[mode]
   if (!_conf) {
     console.log(`环境${mode}不存在，确认是否导入或声明环境，使用默认环境dev`)

@@ -118,7 +118,7 @@ export const Api = {
   },
   /** 启动/禁用ping */
   openPing: (obj: any) => {
-    return http.post('/safe/addrule', obj)
+    return http.post('/safe/blockping', obj)
   },
   /** 启动/禁用防火墙 */
   stopFirewall: (obj: any) => {
@@ -150,10 +150,14 @@ export const Api = {
   },
   /** 禁用计划任务 */
   disablePlanTask: (obj: any) => {
-    return http.post('//cron/disable', obj)
+    return http.post('/cron/disable', obj)
   },
   /** 删除计划任务 */
   deletePlanTask: (obj: any) => {
+    return http.post('/cron/del', obj)
+  },
+  /** 更新计划任务 */
+  updataPlanTask: (obj: any) => {
     return http.post('/cron/del', obj)
   },
   /** 获取系统信息/面板设置 */

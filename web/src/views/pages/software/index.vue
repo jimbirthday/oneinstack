@@ -31,7 +31,7 @@ const conf = reactive({
     {
       name: '可升级',
       index: 2,
-      dot: true,
+      dot: false,
       component: UpdateSoft
     }
   ]),

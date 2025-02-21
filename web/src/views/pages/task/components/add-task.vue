@@ -17,20 +17,17 @@
       label-position="top"
       style="padding: 0 20px"
     >
-      <el-form-item label="任务类型" prop="cron_type" required>
+      <!-- <el-form-item label="任务类型" prop="cron_type" required>
         <el-select v-model="ruleForm.cron_type" placeholder="请选择任务类型">
           <el-option label="Shell脚本" value="shell" />
-          <!-- <el-option label="备份应用" value="backup_app" />
-          <el-option label="备份网站" value="backup_website" />
-          <el-option label="备份数据库" value="backup_database" /> -->
         </el-select>
-      </el-form-item>
+      </el-form-item> -->
 
       <el-form-item label="任务名称" prop="name" required>
         <el-input v-model="ruleForm.name" placeholder="请输入任务名称" />
       </el-form-item>
 
-      <el-form-item label="脚本内容" prop="shell_content" v-if="ruleForm.cron_type === 'shell'">
+      <el-form-item label="脚本内容" prop="command" >
         <div class="code-editor-wrapper">
           <pre
             class="code-editor"
@@ -50,7 +47,7 @@
             <el-option label="每天" value="day" />
             <el-option label="每周" value="week" />
             <el-option label="每月" value="month" />
-            <el-option label="每N分钟" value="n_minute" />
+            <!-- <el-option label="每N分钟" value="n_minute" /> -->
           </el-select>
 
           <div class="cycle-inputs" :class="cycle.type">
@@ -179,8 +176,8 @@
         </div>
         <div class="cycle-actions" style="width: 100%;">
           <el-button type="primary"  @click="addCycle" >
-          <el-icon><Plus />添加</el-icon>
-        </el-button>
+            <el-icon><Plus />添加</el-icon>
+          </el-button>
         </div>
         
       </el-form-item>
@@ -196,6 +193,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { Api } from '@/api/Api'
 import { ref, reactive, watch } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -225,9 +223,9 @@ const weekDays = [
 ]
 
 const ruleForm = reactive({
-  cron_type: 'shell',
+  // cron_type: 'shell',
   name: '',
-  shell_content: '',
+  command: '',
   cycles: [
     {
       type: 'day',
@@ -255,19 +253,20 @@ const ruleForm = reactive({
 })
 
 const rules = reactive<FormRules>({
-  cron_type: [
-    { required: true, message: '请选择任务类型', trigger: 'change' }
-  ],
+  // cron_type: [
+  //   { required: true, message: '请选择任务类型', trigger: 'change' }
+  // ],
   name: [
     { required: true, message: '请输入任务名称', trigger: 'blur' }
   ],
-  shell_content: [
+  command: [
     {
       required: true,
       message: '请输入脚本内容',
       trigger: 'blur',
       validator: (rule, value, callback) => {
-        if (ruleForm.cron_type === 'shell' && !value) {
+        // if (ruleForm.cron_type === 'shell' && !value) {
+          if (!value) {
           callback(new Error('请输入脚本内容'))
         } else {
           callback()
@@ -277,7 +276,7 @@ const rules = reactive<FormRules>({
   ]
 })
 
-const handleCycleChange = (type: string , index: number) => {
+const handleCycleChange = (type: string, index: number) => {
   const cycle = ruleForm.cycles[index]
 
   switch (type) {
@@ -340,7 +339,6 @@ const handleSubmit = async () => {
               )
             case 'n_minute':
               return [generateCronExpression(cycle.n_minute, 0)]
-              // return [`*/${cycle.n_minute} * * * *`]
             default:
               return []
           }
@@ -348,15 +346,18 @@ const handleSubmit = async () => {
 
         // 打印生成的 cron 表达式数组
         console.log('Cron expressions:', cronExpressions)
-        const apidata={
-          name:ruleForm.name,
-          cron_type:ruleForm.cron_type,
-          cron_times:cronExpressions,
-          shell_content:ruleForm.shell_content,
-          status:1
+        let apidata = {
+          name: ruleForm.name,
+          // cron_type: ruleForm.cron_type,
+          schedule: cronExpressions,
+          command: ruleForm.command,
+          enabled: true
         }
-        const { data } = await Api.addPlanTask(apidata)
-        emit('taskAdded', data)
+        if (!props.type) {
+          apidata.id = props.formData.id
+        }
+        const { data } = await Api[props.type ? 'addPlanTask' :'updataPlanTask'](apidata)
+        emit('taskAdded', data) 
         ElMessage.success(props.type ? '添加成功' : '修改成功')
         emit('success')
         handleClose()
@@ -374,10 +375,87 @@ watch(() => props.modelValue, (val) => {
 
 // 监听formData变化,用于修改时回填数据
 watch(() => props.formData, (val) => {
-  if (val && !props.type) {
-    Object.assign(ruleForm, val)
-  }
-}, { immediate: true })
+    if (val && !props.type) {
+        const cronTimes = val.schedule.split(',');
+        ruleForm.cron_type = val.cron_type;
+    ruleForm.name = val.name;
+        ruleForm.cycles = [];
+        ruleForm.command = val.command;
+        ruleForm.name = val.name;
+      copy_content.value = val.command;
+
+        cronTimes.forEach((cronTime: string) => {
+            const [minutes, hours, dayOfMonth, month, dayOfWeek] = cronTime.split(' ');
+            let cycle: any = {
+                customCron: cronTime
+            };
+
+            if (cronTime === '* * * * *') {
+                cycle.type = 'minute';
+            } else if (hours === '*' && minutes.startsWith('*/')) {
+                cycle.type = 'n_minute';
+                cycle.n_minute = parseInt(minutes.split('/')[1]);
+            } else if (hours === '0' && minutes === '0' && dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+                cycle.type = 'day';
+                cycle.dayHour = 0;
+                cycle.dayMinute = 0;
+            } else if (dayOfMonth === '*' && month === '*' && /^\d+$/.test(dayOfWeek)) {
+                cycle.type = 'week';
+                cycle.weekTimes = [
+                    {
+                        day: parseInt(dayOfWeek),
+                        hour: parseInt(hours),
+                        minute: parseInt(minutes)
+                    }
+                ];
+            } else if (month === '*' && /^\d+$/.test(dayOfMonth)) {
+                cycle.type = 'month';
+                cycle.monthTimes = [
+                    {
+                        day: parseInt(dayOfMonth),
+                        hour: parseInt(hours),
+                        minute: parseInt(minutes)
+                    }
+                ];
+            } else if (dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+                cycle.type = 'day';
+                cycle.dayHour = parseInt(hours);
+                cycle.dayMinute = parseInt(minutes);
+            }
+
+            ruleForm.cycles.push(cycle);
+        });
+    }else{
+      ruleForm.name= ''
+      ruleForm.command = ''
+      copy_content.value =  ''
+  ruleForm.cycles = [
+    {
+      type: 'day',
+      monthTimes: [
+        {
+          day: 1,
+          hour: 0,
+          minute: 0
+        }
+      ],
+      weekTimes: [
+        {
+          day: 1,
+          hour: 0,
+          minute: 0
+        }
+      ],
+      dayHour: 0,
+      dayMinute: 0,
+      hourMinute: 0,
+      customCron: '',
+      n_minute: 1
+    }
+  ]
+  
+    }
+}, { immediate: true });
 
 // 添加新的周期行
 const addCycle = () => {
@@ -413,47 +491,47 @@ const removeCycle = (index: number) => {
 }
 
 function generateCronExpression(minutesInput: number, hoursInput: number): string {
-    // 初始化 Cron 表达式的各个部分
-    let minutes = minutesInput % 60;
-    let hours = Math.floor(minutesInput / 60) + hoursInput;
-    let days = 1;
-    let months = 1;
-    let weeks = "*";
+  // 初始化 Cron 表达式的各个部分
+  let minutes = minutesInput % 60;
+  let hours = Math.floor(minutesInput / 60) + hoursInput;
+  let days = 1;
+  let months = 1;
+  let weeks = "*";
 
-    // 处理小时进位到天
-    if (hours >= 24) {
-        days += Math.floor(hours / 24);
-        hours = hours % 24;
+  // 处理小时进位到天
+  if (hours >= 24) {
+    days += Math.floor(hours / 24);
+    hours = hours % 24;
+  }
+
+  // 处理天进位到月（简单假设每月 30 天）
+  if (days > 30) {
+    months += Math.floor(days / 30);
+    days = days % 30;
+    if (days === 0) {
+      days = 30;
     }
+  }
 
-    // 处理天进位到月（简单假设每月 30 天）
-    if (days > 30) {
-        months += Math.floor(days / 30);
-        days = days % 30;
-        if (days === 0) {
-            days = 30;
-        }
+  // 处理月进位到年（简单假设一年 12 个月）
+  if (months > 12) {
+    months = months % 12;
+    if (months === 0) {
+      months = 12;
     }
+  }
 
-    // 处理月进位到年（简单假设一年 12 个月）
-    if (months > 12) {
-        months = months % 12;
-        if (months === 0) {
-            months = 12;
-        }
-    }
-
-    // 生成新的 Cron 表达式
-    return `${minutes} ${hours} ${days} ${months} ${weeks}`;
+  // 生成新的 Cron 表达式
+  return `${minutes} ${hours} ${days} ${months} ${weeks}`;
 }
 
 const handleScriptInput = (event: Event) => {
   const target = event.target as HTMLPreElement;
-  console.log(target.innerText)
   if (target) {
-    ruleForm.shell_content = target.innerText;
+    ruleForm.command = target.innerText;
   }
 }
+
 </script>
 
 <style scoped lang="less">

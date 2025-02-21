@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, Setting, ArrowDown } from '@element-plus/icons-vue'
+import { Refresh, Setting, ArrowDown, VideoPlay, VideoPause, Warning } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Api } from '@/api/Api'
 import AddTask from './add-task.vue'
@@ -18,7 +18,7 @@ interface RuleForm {
 
 interface Task {
   id: number
-  status: number
+  enabled: boolean
   // 其他属性...
 }
 
@@ -48,9 +48,9 @@ const getData = async () => {
       q: searchValue.value
     })
     console.log(res, 'res')
-    if (res) {  // 确保请求成功
-      tableData.value = res.data || []  // 更新表格数据
-      pagination.total = res.total || 0  // 更新总数
+    if (res) {
+      tableData.value = res.data || []
+      pagination.total = res.total || 0
     } else {
       ElMessage.error(res?.message || '获取数据失败')
     }
@@ -77,19 +77,19 @@ const onSubmit = () => {
   getData()
 }
 
-const statusClick = () => {
+const enabledClick = () => {
   ElMessageBox.confirm('计划任务暂停后将无法继续运行，您真的要停用这个计划任务吗？', '设置计划任务状态', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
-    .then(() => {
+   .then(() => {
       ElMessage({
         type: 'success',
         message: '退出成功'
       })
     })
-    .catch(() => {
+   .catch(() => {
       ElMessage({
         type: 'info',
         message: '取消退出'
@@ -104,39 +104,18 @@ const ruleForm = reactive<RuleForm>({
   count: '',
   desc: ''
 })
-
-const rules = reactive<FormRules<RuleForm>>({
-  name: [
-    { required: true, message: 'Please input Activity name', trigger: 'blur' },
-    { min: 3, max: 5, message: 'Length should be 3 to 5', trigger: 'blur' }
-  ],
-  region: [
-    {
-      required: true,
-      message: 'Please select Activity zone',
-      trigger: 'change'
-    }
-  ],
-  count: [
-    {
-      required: true,
-      message: 'Please select Activity count',
-      trigger: 'change'
-    }
-  ],
-  desc: [{ required: true, message: '请输入域名', trigger: 'blur' }]
+let action_type = ref(true)
+let rulesForm = ref({
+  name: '',
+  cron_type: '',
+  schedule: '',
+  created_at: '',
+  deleted_at: '',
+  id: '',
+  command: '',
+  enabled: true,
+  updated_at: ''
 })
-
-const submitForm = async (formEl: FormInstance | undefined) => {
-  if (!formEl) return
-  await formEl.validate((valid, fields) => {
-    if (valid) {
-      console.log('submit!')
-    } else {
-      console.log('error submit!', fields)
-    }
-  })
-}
 
 const filterDirection = ref('')
 const formatDate = (dateStr: string) => {
@@ -153,13 +132,24 @@ const formatDate = (dateStr: string) => {
 
 const addTaskVisible = ref(false)
 const addTask = () => {
+  action_type.value = true
   addTaskVisible.value = true
+  rulesForm.value = {
+  name: '',
+  cron_type: '',
+  schedule: '',
+  created_at: '',
+  deleted_at: '',
+  id: '',
+  command: '',
+  enabled: true,
+  updated_at: ''
 }
-const updateDrawerVisible = (value: boolean) => {
-  addTaskVisible.value = value
 }
+
 const handleTaskAdded = (data: any) => {
   console.log('接收到子组件传递的数据:', data)
+  // addTaskVisible.value = false
   getData()
 }
 const handleCurrentChange = (val: number) => {
@@ -198,7 +188,7 @@ const batchDelete = async () => {
 
 // 批量禁止方法
 const batchDisable = async () => {
-  const validSelection = multipleSelection.value.filter(item => item.status === 1)
+  const validSelection = multipleSelection.value.filter(item => item.enabled === true)
   if (validSelection.length === 0) {
     ElMessage.warning('请选择运行中的任务进行禁止')
     return
@@ -224,7 +214,7 @@ const batchDisable = async () => {
 
 // 批量开启方法
 const batchEnable = async () => {
-  const validSelection = multipleSelection.value.filter(item => item.status === 0)
+  const validSelection = multipleSelection.value.filter(item => item.enabled === false)
   if (validSelection.length === 0) {
     ElMessage.warning('请选择已停用的任务进行开启')
     return
@@ -270,7 +260,7 @@ const deleteSingleTask = async (row: any) => {
 
 // 单条数据禁用方法
 const disableSingleTask = async (row: any) => {
-  if (row.status === 0) {
+  if (row.enabled === false) {
     ElMessage.warning('该任务已停用，无需再次禁用')
     return
   }
@@ -293,7 +283,7 @@ const disableSingleTask = async (row: any) => {
 
 // 单条数据开启方法
 const enableSingleTask = async (row: any) => {
-  if (row.status === 1) {
+  if (row.enabled === true) {
     ElMessage.warning('该任务正在运行，无需再次开启')
     return
   }
@@ -314,6 +304,24 @@ const enableSingleTask = async (row: any) => {
   })
 }
 
+// 更新单条数据方法
+const updateSingleTask = async (row: any) => {
+  action_type.value = false
+  addTaskVisible.value = true
+  rulesForm.value = {
+    name: row.name,
+    cron_type: row.cron_type,
+    schedule: row.schedule,
+    created_at: row.created_at,
+    deleted_at: row.deleted_at,
+    id: row.id,
+    command: row.command,
+    enabled: row.enabled,
+    updated_at: row.updated_at
+  }
+  // 这里可以传递 row 数据到子组件进行编辑
+  // 例如：addTaskVisible.value = { ...row }
+}
 // 选择过滤函数，控制选择逻辑
 const selectFilter = (row: any) => {
   return true
@@ -322,6 +330,30 @@ const selectFilter = (row: any) => {
 // 全选过滤函数，控制全选逻辑
 const selectAllFilter = (rows: any[]) => {
   return rows.filter(row => selectFilter(row))
+}
+
+// 上一页
+const prevPage = () => {
+  if (pagination.currentPage > 1) {
+    pagination.currentPage--
+    getData()
+  }
+}
+
+// 下一页
+const nextPage = () => {
+  const totalPages = Math.ceil(pagination.total / pagination.pageSize)
+  if (pagination.currentPage < totalPages) {
+    pagination.currentPage++
+    getData()
+  }
+}
+
+// 处理每页数量变化
+const handlePageSizeChange = (newSize: number) => {
+  pagination.pageSize = newSize
+  pagination.currentPage = 1
+  getData()
 }
 
 onMounted(() => {
@@ -333,15 +365,16 @@ onMounted(() => {
 
 <template>
   <div class="container">
-    <div class="tool-bar">
-      <el-space class="btn-group">
+    <el-card >
+      <div class="" style="display: flex;">
+      <el-space class="btn-group" >
         <el-button type="primary" @click="addTask">添加任务</el-button>
         <!-- <el-button type="primary">执行任务</el-button> -->
         <el-button type="primary" @click="batchEnable">启动任务</el-button>
         <el-button type="primary"  @click="batchDisable">停止任务</el-button>
         <el-button type="primary" @click="batchDelete">删除任务</el-button>
       </el-space>
-      <div class="demo-form-inline flex">
+      <div class="demo-form-inline flex" style="margin-left: auto;">
         <!-- <el-dropdown>
           <el-button type="primary" class="mr-2">
             <span class="el-dropdown-link">
@@ -356,13 +389,15 @@ onMounted(() => {
           </template>
         </el-dropdown> -->
         <search-input placeholder="请输入域名或备注" style="margin-right: 18px" v-model="searchValue" @search="getData() "/>
-        <el-button :icon="Refresh" type="primary" @click="onSubmit" />
+        <el-button :icon="Refresh" type="primary" @click="onSubmit" style="margin-left: auto;"/>
         <!-- <el-button :icon="Setting" type="primary" @click="onSubmit" /> -->
       </div>
     </div>
+  </el-card>
+    
     <div class="box2">
       <el-table
-      ref="tableRef"
+        ref="tableRef"
         class="fileTable"
         :data="tableData"
         border
@@ -373,27 +408,34 @@ onMounted(() => {
         :row-key="(row: any) => row.id"   
         empty-text="暂无数据"
       >
-      
         <el-table-column type="selection" width="55" :reserve-selection="true" :selectable="selectFilter" />
         <el-table-column prop="name" label="任务名称" width="180"></el-table-column>
-        <el-table-column prop="status" label="状态" width="180">
+        <el-table-column prop="enabled" label="状态" width="180">
           <template #default="scope">
             <div style="display: flex; flex-direction: row; align-items: center; cursor: pointer">
               <a
-                style="color: #64ffc9; text-decoration: underline"
-                v-if="scope.row.status === 1"
-                @click="statusClick()"
+                style="color: #64ffc9; text-decoration: underline ;display: flex;" class="abox"
+                v-if="scope.row.enabled"
+                @click="disableSingleTask(scope.row)"
               >
                 运行中
+                <el-icon><VideoPlay /></el-icon>
               </a>
-              <a style="color: #ff8888; text-decoration: underline" v-if="scope.row.status === 0">已停用</a>
+              <a style="color: #FF4848; text-decoration: underline; " class="abox" v-else-if="!scope.row.enabled "  @click="enableSingleTask(scope.row)">
+                <el-icon><VideoPause /></el-icon>
+                已停用
+              </a>
+              <!-- <a style="color: #ff8888; text-decoration: underline"  class="abox" v-else>
+                <el-icon><Warning /></el-icon>
+                运行异常
+              </a> -->
             </div>
           </template>
         </el-table-column>
         <el-table-column prop="address" label="执行周期">
           <template #default="scope">
             <div style="display: flex; flex-direction: row; align-items: center; cursor: pointer">
-              <span v-html="formatCron(scope.row.cron_times)"></span>
+              <span v-html="formatCron(scope.row.schedule)"></span>
             </div>
           </template>
         </el-table-column>
@@ -406,33 +448,49 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="address" label="操作">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="enableSingleTask(scope.row)" v-if="scope.row.status === 0">
+            <el-button link type="primary" size="small" @click="enableSingleTask(scope.row)" v-if="!scope.row.enabled">
               开启
             </el-button>
-            <el-button link type="primary" size="small" @click="disableSingleTask(scope.row)" v-if="scope.row.status === 1">
+            <el-button link type="primary" size="small" @click="disableSingleTask(scope.row)" v-if="scope.row.enabled ">
               禁用
             </el-button>
             <el-button link type="primary" size="small" @click="deleteSingleTask(scope.row)">
               删除
             </el-button>
-            <!-- <el-button link type="primary" size="small" @click="updateSingleTask(scope.row)">
+            <el-button link type="primary" size="small" @click="updateSingleTask(scope.row)">
               更新
-            </el-button> -->
+            </el-button>
           </template>
         </el-table-column>
+        <!-- 自定义表格底部栏用于分页 -->
+        <template #footer>
+          <tr>
+            <td colspan="6">
+              <div class="table-pagination">
+                <el-select v-model="pagination.pageSize" @change="handlePageSizeChange">
+                  <el-option label="10" value="10"></el-option>
+                  <el-option label="20" value="20"></el-option>
+                  <el-option label="50" value="50"></el-option>
+                </el-select>
+                <span>条/页</span>
+                <el-button @click="prevPage" :disabled="pagination.currentPage === 1">上一页</el-button>
+                <span>{{ pagination.currentPage }} / {{ Math.ceil(pagination.total / pagination.pageSize) }}</span>
+                <el-button @click="nextPage" :disabled="pagination.currentPage === Math.ceil(pagination.total / pagination.pageSize)">下一页</el-button>
+                <span>共 {{ pagination.total }} 条记录</span>
+              </div>
+            </td>
+          </tr>
+        </template>
       </el-table>
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="pagination.currentPage"
-          background
-          layout="total, prev, pager, next"
-          :total="pagination.total"
-          @current-change="handleCurrentChange"
-        />
-      </div>
     </div>
-    <AddTask v-model="addTaskVisible" :type="true" @taskAdded="handleTaskAdded"  />
+    <AddTask v-model="addTaskVisible" :type="action_type" @taskAdded="handleTaskAdded" :formData="rulesForm"  />
   </div>
 </template>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.abox{
+  display: flex; 
+    align-items: center; /* 垂直居中 */
+    justify-content: center; /* 水平居中 */
+}
+</style>

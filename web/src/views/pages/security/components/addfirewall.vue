@@ -33,7 +33,7 @@
     <el-form-item label="端口" prop="ports" :required="true">
       <el-input 
         v-model="ruleForm.ports" 
-        placeholder="支持多个端口"
+        placeholder="支持多个端口，如:80,88"
       />
     </el-form-item>
     <el-form-item label="来源" prop="ips" :required="ruleForm.ips === 'true'">
@@ -76,12 +76,12 @@
     </el-form-item> 
     <div class="textbox">
       <div class="tagbox">* </div>
-        支持添加多个端口，如：80，88
+        支持添加多个端口,如:80,88
     </div>
-    <div class="textbox">
+    <!-- <div class="textbox">
       <div class="tagbox">* </div>
-      支持添加多个端口范围，如：80，88，90-99，110-120  
-    </div>
+      支持添加多个端口范围,如:80，88，90-99，110-120  
+    </div> -->
     
   </el-form>
       </template>

@@ -161,7 +161,7 @@ const conf = reactive<Config>({
           }
         }
       },
-      tip: '设置面板账号'
+      tip: '设置面板账号，用于登录面板'
     },
     {
       label: '面板密码',
@@ -185,7 +185,7 @@ const conf = reactive<Config>({
           }
         }
       },
-      tip: '设置面板密码'
+      tip: '设置面板密码，用于登录面板'
     },
     // {
     //   label: '绑定宝塔账号',
@@ -275,8 +275,14 @@ const getSystemInfo = async () => {
   conf.settingData.forEach(item => {
     if (res) {  // 检查 res.data 是否存在
       item.value = res[item.prop] || res.user?.[item.prop] || ''
+      if (item.prop === 'password') {
+        // const passwordlen = res[item.prop] || res.user?.[item.prop].length || 6
+        // 如果 prop 是 password，将值设置为 '******'
+        item.value = '******'
+      }
     }
   })
+  // conf.settingData.password =''
 }
 watchEffect(() => {
   getSystemInfo()

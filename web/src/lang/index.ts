@@ -12,7 +12,8 @@ export const langobj: any = {
   'th-TH': 'TH', //泰语
   'id-ID': 'IDN', //印度利西亚语
   'pt-PT': 'PT', //葡萄牙语
-  'es-ES': 'ES' //西班牙语
+  'es-ES': 'ES' ,//西班牙语
+  'es-CH': 'CH' //中文
 }
 
 //@ts-ignore
@@ -30,7 +31,7 @@ i18n.setLang = async (lang: string = Cookie.get(EKey.language) || 'en-us') => {
 i18n.t = i18n.global.t
 
 //@ts-ignore
-i18n.locale = 'en-us'
+i18n.locale = 'es-CH'
 
 export default i18n as any as {
   [key: string]: any

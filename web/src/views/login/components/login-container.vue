@@ -24,6 +24,7 @@ onMounted(() => {
     } else {
       if (!splineScript) {
         const script = document.createElement('script')
+        script.style.width='80px'
         script.type = 'module'
         script.src = 'https://unpkg.com/@splinetool/viewer@1.9.68/build/spline-viewer.js'
         script.onload = () => {
